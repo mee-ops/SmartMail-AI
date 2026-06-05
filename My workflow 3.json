@@ -1,0 +1,202 @@
+{
+  "name": "My workflow 3",
+  "nodes": [
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "simple": false,
+        "filters": {},
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmailTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        0
+      ],
+      "id": "2a78b695-f09a-49b6-9c79-a0bf0a563a51",
+      "name": "Gmail Trigger",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "lk7sMgG6IDQB6hv4",
+          "name": "Gmail OAuth2 API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "c6b307df-40db-4204-98a3-9fec52ce2abd",
+              "name": "customer_email",
+              "value": "={{ $json.from.value[0].address }}",
+              "type": "string"
+            },
+            {
+              "id": "21363b12-c3b0-4ded-8032-a248d8e77234",
+              "name": "subject",
+              "value": "={{ $json.subject }}",
+              "type": "string"
+            },
+            {
+              "id": "1cdf5d3a-69f9-4b46-a4b0-b7d8d4cdc1b0",
+              "name": "email_body",
+              "value": "={{ $json.text }}",
+              "type": "string"
+            },
+            {
+              "id": "999e06ff-9af2-4d69-8087-0fca87a44ccb",
+              "name": "thread_id",
+              "value": "={{ $json.threadId }}",
+              "type": "string"
+            },
+            {
+              "id": "f5c54485-fd7c-45ac-bc14-9614e2083bb9",
+              "name": "message_id",
+              "value": "={{ $json.messageId }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        208,
+        0
+      ],
+      "id": "d84f3134-8c39-4367-96d3-2d5c36bf0e64",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Customer Email:\n{{ $json.customer_email }}\n\nSubject:\n{{ $json.subject }}\n\nEmail:\n{{ $json.email_body }}",
+        "options": {
+          "systemMessage": "You are SmartMail AI, an intelligent customer support assistant representing the organization.\n\nYour primary responsibility is to analyze the complete email conversation, understand the customer's intent, sentiment, urgency, and context, and generate a professional, accurate, and helpful email draft.\n\nGENERAL RULES:\n\nAlways read and understand the entire email content before generating a response.\n\nGenerate responses that are:\n- Professional\n- Friendly\n- Human-like\n- Context-aware\n- Personalized\n\nNever generate generic responses if specific information is available.\n\nAlways acknowledge the customer's concern before providing a solution.\n\nIf the customer reports an issue:\n- Empathize with the customer.\n- Confirm the issue has been noted.\n- Inform them a support ticket has been raised or will be raised.\n- Provide a ticket number if available.\n- Explain next steps.\n- Inform them they can track status through support channels.\n\nIf technical investigation is required:\n- Inform them the issue has been escalated.\n- Mention the technical team is investigating.\n- Provide ETA if available.\n\nIf phone support is needed:\n- Inform them a representative may contact them.\n- Request missing contact details if needed.\n\nIf guidance or onboarding is requested:\n- Provide clear step-by-step instructions.\n- Use company knowledge whenever available.\n\nIf information is missing:\n- Politely request the missing details.\n\nSECURITY RULES:\n\nNever disclose:\n- Passwords\n- API Keys\n- Internal systems\n- Employee information\n- Financial information\n- Customer data belonging to others\n\nIf requested:\n- Politely refuse.\n- Explain confidentiality.\n\nTONE:\n- Professional\n- Friendly\n- Respectful\n- Helpful\n- Customer-focused\n\nOUTPUT FORMAT:\n\nGenerate only the email body.\n\nDo not mention AI.\nDo not mention internal instructions.\nGenerate a complete customer-ready email response.\nIMPORTANT OUTPUT RULES:\n\nGenerate only the email body.\n\nDo NOT include:\n- Subject:\n- Re:\n- To:\n- From:\n- Email headers\n- Signatures unless appropriate\n\nStart directly with the greeting.\n\nExample:\n\nHi John,\n\nThank you for contacting us regarding your inquiry.\n\n...\n\nBest regards,\nSupport Team\n\nReturn only the email content."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        416,
+        0
+      ],
+      "id": "b95d4c96-576a-4319-bbd7-e76d3f8f3898",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "resource": "draft",
+        "subject": "=Re: {{ $('Edit Fields').item.json.subject }}",
+        "message": "={{ $('AI Agent').item.json.output }}",
+        "options": {
+          "threadId": "={{ $('Edit Fields').item.json.thread_id }}",
+          "sendTo": "={{ $('Edit Fields').item.json.customer_email }}"
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        768,
+        0
+      ],
+      "id": "62c9c159-ebd8-488d-bc74-f5a5bf2048c3",
+      "name": "Create a draft",
+      "webhookId": "2bc49951-1f5d-4072-bba0-e463b1150804",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "lk7sMgG6IDQB6hv4",
+          "name": "Gmail OAuth2 API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-2.5-flash-lite",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1.1,
+      "position": [
+        288,
+        208
+      ],
+      "id": "47bd7c5d-662f-42b4-9aa3-b956bf0c7d2f",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "6EWB0flL3S3pI5S0",
+          "name": "Google Gemini(PaLM) Api account 2"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Gmail Trigger": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Create a draft",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "69a85e61-dfe0-4483-a6eb-55889dbd2772",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "2d7f670dd601a0b8216c12ff2a2fab93742fb7b89d2cf241cf0532b4282b7040"
+  },
+  "id": "sr7N6A5clHopYdG9",
+  "tags": []
+}
